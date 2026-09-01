@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TH-LoRA: Temporal Hierarchical Adaptive LoRA Memory for Lifelong Learning of LLMs · Old Craftsman</title>
+  <meta name="description" content="TH-LoRA: a temporal hierarchical adaptive LoRA memory for lifelong learning of large language models.">
+  <script>
+    MathJax = {
+      tex: { inlineMath: [['$', '$']], displayMath: [['$$', '$$']] },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" async></script>
+  <style>
+    :root {
+      --bg: #faf7f2;
+      --surface: #ffffff;
+      --ink: #2b2620;
+      --ink-soft: #6f665a;
+      --accent: #b4633a;
+      --line: #e8e1d5;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: "Georgia", "Songti SC", "SimSun", "Noto Serif SC", serif;
+      background: var(--bg);
+      color: var(--ink);
+      line-height: 1.8;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    .container { max-width: 860px; margin: 0 auto; padding: 0 24px; }
+
+    header {
+      position: sticky; top: 0; z-index: 10;
+      background: rgba(250, 247, 242, 0.9);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid var(--line);
+    }
+    .nav { display: flex; align-items: center; justify-content: space-between; height: 64px; }
+    .brand { font-size: 1.15rem; font-weight: 700; color: var(--ink); }
+    .brand:hover { text-decoration: none; }
+    .brand span { color: var(--accent); }
+    .back { font-size: 0.9rem; }
+
+    /* ---------- Article ---------- */
+    .article { padding: 56px 0 80px; }
+
+    .paper-meta { text-align: center; margin-bottom: 48px; }
+    .paper-meta .kicker {
+      font-size: 0.8rem; letter-spacing: 0.3em; text-transform: uppercase;
+      color: var(--accent); margin-bottom: 14px;
+    }
+    .paper-meta h1 { font-size: clamp(1.6rem, 4vw, 2.3rem); line-height: 1.35; margin-bottom: 14px; }
+    .paper-meta .author { color: var(--ink-soft); font-size: 1rem; }
+    .paper-meta .date { color: var(--ink-soft); font-size: 0.85rem; margin-top: 6px; }
+
+    .abstract {
+      background: var(--surface); border: 1px solid var(--line);
+      border-radius: 14px; padding: 26px 30px; margin: 0 auto 48px;
+    }
+    .abstract strong { color: var(--accent); }
+
+    h2 {
+      font-size: 1.45rem; margin: 48px 0 16px;
+      padding-bottom: 8px; border-bottom: 1px solid var(--line);
+    }
+    h3 { font-size: 1.15rem; margin: 32px 0 12px; }
+    h4 { font-size: 1rem; margin: 24px 0 8px; color: var(--accent-dark); }
+    p { margin-bottom: 14px; }
+
+    ul, ol { margin: 0 0 14px 1.8em; }
+    li { margin-bottom: 6px; }
+
+    code, .mono {
+      font-family: "Consolas", "Menlo", monospace;
+      font-size: 0.88em;
+      background: rgba(180, 99, 58, 0.08);
+      padding: 1px 6px; border-radius: 5px;
+    }
+
+    table {
+      width: 100%; border-collapse: collapse; margin: 20px 0 28px;
+      background: var(--surface); border-radius: 10px; overflow: hidden;
+      font-size: 0.92rem;
+    }
+    caption { caption-side: top; font-size: 0.88rem; color: var(--ink-soft); padding-bottom: 10px; }
+    th, td { padding: 9px 14px; text-align: left; border-bottom: 1px solid var(--line); }
+    thead th { background: rgba(180, 99, 58, 0.08); font-weight: 700; }
+    tbody tr:last-child td { border-bottom: none; }
+
+    .eq { margin: 18px 0 22px; overflow-x: auto; }
+    .eq-tag { color: var(--ink-soft); font-size: 0.85rem; }
+
+    blockquote {
+      border-left: 3px solid var(--accent);
+      background: rgba(180, 99, 58, 0.05);
+      padding: 12px 20px; margin: 16px 0; border-radius: 0 10px 10px 0;
+      color: var(--ink-soft);
+    }
+
+    .refs { font-size: 0.88rem; color: var(--ink-soft); }
+    .refs li { margin-bottom: 10px; }
+
+    footer {
+      border-top: 1px solid var(--line);
+      padding: 28px 0; text-align: center;
+      color: var(--ink-soft); font-size: 0.85rem;
+    }
+
+    @media (max-width: 640px) {
+      .article { padding: 36px 0 56px; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="container nav">
+      <a class="brand" href="../">Old <span>Craftsman</span></a>
+      <a class="back" href="../">← 返回首页</a>
+    </div>
+  </header>
+
+  <main class="container article">
+    <div class="paper-meta">
+      <div class="kicker">Paper · 技术心得</div>
+      <h1>TH-LoRA: Temporal Hierarchical Adaptive LoRA Memory for Lifelong Learning of Large Language Models</h1>
+      <div class="author">Jiyuan Wang · jiyuanwong@gmail.com · Independent Researcher</div>
+      <div class="date">2026-09-01</div>
+    </div>
+
+    <div class="abstract">
+      <strong>Abstract.</strong>
+      Large language models (LLMs) suffer from catastrophic forgetting when they are sequentially adapted to new tasks, while naively accumulating low-rank adapters (LoRA) leads to unbounded parameter growth and inter-task interference. We propose <strong>TH-LoRA</strong>, a temporal hierarchical adaptive LoRA memory that treats LoRA adapters as plug-in memory units and consolidates them following a <em>short-term → long-term</em> progression analogous to human memory. TH-LoRA maintains a bounded short-term window of recently learned adapters and a slowly evolving long-term adapter that is updated under elastic weight consolidation (EWC) with a learning rate three orders of magnitude smaller than the short-term one. A composite <em>memory-importance score</em> replaces pure time decay when weighting adapters during consolidation, and an SVD-based low-rank reconstruction keeps the merged adapter rank constant. To avoid mutual cancellation when merging, we introduce a <em>dual-dimension conflict detector</em> that combines O-LoRA-style subspace interference with behavior-level output divergence, and a <em>three-level conflict resolution</em> mechanism culminating in a <em>transient conflict gate</em> (TCG) that isolates severely conflicting knowledge instead of forcing a merge. A <em>global conflict graph</em> captures non-adjacent, cross-layer conflicts, and a <em>trigger decision layer</em> schedules consolidation, EWC refresh, and consistency checks through a lightweight priority queue without any external dependencies. Preliminary experiments on MiniMind and Qwen2.5-1.5B indicate bounded parameter growth, reduced forgetting, and controllable consolidation; a medical-domain case study further reveals that LoRA memorizes distributions rather than isolated facts, motivating frequency-aware and retrieval-assisted designs for lookup-type knowledge.
+    </div>
+
+    <h2 id="intro">1. Introduction</h2>
+    <p>Deploying large language models (LLMs) in the real world requires them to continuously absorb new knowledge from evolving enterprise data. Two standard approaches fall short of this requirement. <em>Full fine-tuning</em> is prohibitively expensive at scale and suffers from <em>catastrophic forgetting</em> [1, 2]: acquiring new knowledge rapidly degrades previously learned knowledge. <em>Retrieval-augmented generation</em> (RAG) [11] keeps the parametric memory fixed and relies on external stores, which decouples memory from the model but cannot capture reusable skills and reasoning patterns that benefit from being encoded in parameters.</p>
+    <p>Low-rank adaptation (LoRA) [3] provides a compelling middle ground: a base model is frozen and each task contributes a compact low-rank adapter $\Delta W = BA$. However, a naive continual-learning recipe that trains one LoRA per task and simply sums them runs into four practical obstacles: (1) <em>catastrophic forgetting</em> of earlier adapters; (2) <em>unbounded parameter growth</em>, since the number of adapters grows linearly with the number of tasks, inflating inference cost; (3) <em>inter-task conflict</em>, where adapters learned on different tasks contain opposing parameter directions that cancel out when merged; and (4) <em>inflexible knowledge updates</em>, i.e., the inability to perform precise, parameter-level corrections as enterprise knowledge iterates.</p>
+    <p>We address these four problems with <strong>TH-LoRA</strong>, a temporal hierarchical adaptive LoRA memory. Inspired by how the human brain consolidates episodic short-term memories into stable long-term ones, TH-LoRA organizes adapters into a bounded <em>short-term window</em> and a single <em>long-term memory</em> layer:</p>
+    <ul>
+      <li><strong>Temporal hierarchical memory</strong> (§2.1): new knowledge is first learned by a short-term LoRA; when the window overflows, adapters are consolidated and either stay short-term or sediment into the long-term layer.</li>
+      <li><strong>Memory-importance scoring</strong> (§2.2): a composite score of recency, usage frequency, credibility, and task relevance replaces pure time decay, so that "recent but unimportant" knowledge no longer overrides "old but critical" knowledge.</li>
+      <li><strong>SVD low-rank consolidation</strong> (§2.3): weighted merging followed by truncated SVD keeps the merged adapter rank constant, bounding parameter growth.</li>
+      <li><strong>Elastic protection for long-term memory</strong> (§2.5): the long-term layer is updated with a tiny learning rate under an EWC regularizer, allowing erroneous knowledge to be corrected while protecting core knowledge.</li>
+      <li><strong>Dual-dimension conflict detection and transient gating</strong> (§2.6, §2.7): conflicts are measured in both the parameter subspace and the output behavior space; a transient conflict gate isolates severely conflicting knowledge instead of forcing a destructive merge.</li>
+      <li><strong>Global conflict graph</strong> (§2.8) and a <strong>trigger decision layer</strong> (§2.9) capture non-adjacent conflicts and automate consolidation, EWC refresh, and consistency checks with zero external dependencies.</li>
+    </ul>
+
+    <h2 id="related">2. Related Work</h2>
+    <h4>Low-rank adaptation (LoRA).</h4>
+    <p>LoRA [3] freezes the pretrained weights $W_0$ and learns a low-rank increment $\Delta W = BA$ with $B \in \mathbb{R}^{d\times r}$, $A \in \mathbb{R}^{r\times k}$ and rank $r \ll \min(d,k)$, dramatically reducing trainable parameters. TH-LoRA builds on LoRA as its memory unit.</p>
+    <h4>Catastrophic forgetting and continual learning.</h4>
+    <p>Catastrophic interference was characterized early in connectionist networks [1, 2], and a recent survey systematizes continual learning of LLMs into continual pre-training, domain-adaptive pre-training, and continual fine-tuning stages [5]. Elastic weight consolidation (EWC) [4] penalizes changes to parameters that are important for previous tasks using the diagonal of the Fisher information matrix. TH-LoRA applies EWC inside its long-term memory layer to enable safe, incremental corrections.</p>
+    <h4>Orthogonal subspace learning (O-LoRA).</h4>
+    <p>O-LoRA [6] enforces an orthogonality constraint $A_i^\top A_j = 0$ during training so that different tasks update interference-free subspaces. TH-LoRA generalizes this idea from <em>training-time orthogonalization</em> to <em>consolidation-time conflict detection</em>: it measures the signed subspace interference between two adapters and uses it to decide how (or whether) to merge them.</p>
+    <h4>LoRA merging and routing.</h4>
+    <p>Task arithmetic [7] studies how merging task-specific parameter vectors degrades performance when directions conflict. LoraHub [8] composes LoRA modules trained on diverse upstream tasks, optimizing the composition coefficients with a gradient-free search on a few examples of an unseen target task. FashionGPT [9] fuses multiple task-specific LoRA adapters with learnable weights, observing that adapter-level fusion avoids the conflicts of dataset-level fusion. Both perform one-shot composition without an explicit conflict model or a temporal memory hierarchy. Mixture-of-LoRA architectures (e.g., LoRAMoE [10]) use static routing to combine specialized adapters. TCG differs by being <em>transient</em>: it is instantiated only under severe conflict and dismantled once the conflict is resolved, thus incurring no overhead during normal inference.</p>
+    <h4>Retrieval-augmented generation (RAG).</h4>
+    <p>RAG [11] couples a frozen model with an external knowledge store, which excels at lookup-type knowledge but adds architectural complexity. TH-LoRA focuses on parametric memory and discusses the RAG trade-off as an experimental comparison point (§3).</p>
+
+    <h2 id="method">3. Method</h2>
+
+    <h3>3.1 Temporal Hierarchical Memory</h3>
+    <p>Let $W_0$ denote the frozen base-model parameters. TH-LoRA composes the effective weights as</p>
+    <div class="eq">$$W = W_0 + \Delta W_{\mathrm{long}} + \sum_{i \in \mathcal{W}} \alpha_i \, \Delta W_{s_i} \tag{1}$$</div>
+    <p>where $\Delta W_{\mathrm{long}}$ is the long-term memory adapter, $\mathcal{W}$ is the short-term window of nominal size $W_{\mathrm{win}}$ (default $W_{\mathrm{win}}=4$; it may temporarily hold more adapters under TCG isolation, §3.7), and $\alpha_i$ are softmax-normalized importance weights (§3.2). The transient conflict gate is deliberately absent from this composition: it operates at the activation level (§3.7), interpolating between the outputs of two conflicting adapters rather than adding a weight increment, and it is inactive during normal inference.</p>
+    <p>During training, the adapter being trained participates in the forward pass with $\alpha=1$ (a <em>training</em> flag), preserving a complete gradient path. Adapter increments are injected transparently by monkey-patching the forward method of the target modules; dots in module paths are sanitized to underscores for compatibility with <code>nn.ModuleDict</code>. The base model is never updated.</p>
+    <p>When the number of short-term adapters exceeds $W_{\mathrm{win}}$, a consolidation procedure (§3.4) is triggered.</p>
+
+    <h3>3.2 Memory-Importance Scoring</h3>
+    <p>Early designs weighted adapters purely by time decay $\alpha = e^{-\lambda t}$, which cannot distinguish "recent but unimportant" from "old but frequently used" knowledge. TH-LoRA replaces this with a composite memory-importance score</p>
+    <div class="eq">$$M_i = w_t\, T_i + w_f\, F_i + w_c\, C_i + w_r\, R_i \tag{2}$$</div>
+    <p>with factors and default weights summarized in Table 1. The recency factor is $T_i = \exp(-\lambda\, \Delta t_i)$ (default $\lambda=0.01$); the usage factor $F_i$ is the activation proportion over the last $K$ inferences (default $K=100$); the credibility factor is $C_i = 1/(1 + \mathrm{val\_loss}_i)$; and the relevance factor $R_i$ measures semantic similarity to the current task. The normalized consolidation weights are obtained by</p>
+    <div class="eq">$$\alpha_i = \mathrm{softmax}\left(M_i \cdot \mathrm{boost}_i\right) \tag{3}$$</div>
+    <p>where $\mathrm{boost}_i \geq 1$ (default $1$) allows task-level importance amplification; the boost is applied <em>before</em> the softmax. The same weights are reused for merge weighting and for the long-term protection strength.</p>
+
+    <table>
+      <caption>Table 1: Factors of the memory-importance score and their defaults.</caption>
+      <thead><tr><th>Factor</th><th>Symbol</th><th>Default weight $w$</th></tr></thead>
+      <tbody>
+        <tr><td>Recency</td><td>$T_i = \exp(-\lambda\Delta t_i)$</td><td>0.30</td></tr>
+        <tr><td>Usage frequency</td><td>$F_i$ (activation ratio over last $K$)</td><td>0.25</td></tr>
+        <tr><td>Credibility</td><td>$C_i = 1/(1+\mathrm{val\_loss})$</td><td>0.25</td></tr>
+        <tr><td>Task relevance</td><td>$R_i$ (semantic similarity)</td><td>0.20</td></tr>
+      </tbody>
+    </table>
+
+    <h3>3.3 SVD-Based Low-Rank Consolidation</h3>
+    <p>Merging adapters by direct summation $\Delta W = \sum_i \alpha_i B_i A_i$ can inflate the effective rank from $r$ to $k\cdot r$, violating the low-rank assumption and amplifying inference cost. TH-LoRA instead performs a weighted fusion followed by truncated SVD:</p>
+    <ol>
+      <li><em>Weighted fusion</em>: $\Delta W_{\mathrm{raw}} = \sum_i \alpha_i\,\Delta W_i$.</li>
+      <li><em>SVD</em>: $\Delta W_{\mathrm{raw}} = U\Sigma V^\top$.</li>
+      <li><em>Top-$r$ truncation</em>: keep the $r$ largest singular values and corresponding singular vectors.</li>
+      <li><em>Reconstruction</em>:
+        <div class="eq">$$B' = U_r \sqrt{\Sigma_r}, \qquad A' = \sqrt{\Sigma_r}\, V_r^\top \tag{4}$$</div>
+      </li>
+    </ol>
+    <p>The merged adapter therefore has a constant rank $r$ and constant parameter count. Low-energy noise is discarded by singular-value ordering, and the information loss is quantified by the discarded-energy ratio $\sum_{j>r}\sigma_j / \sum_j \sigma_j$.</p>
+
+    <h3>3.4 Consolidation Procedure</h3>
+    <p>The full window-consolidation procedure is:</p>
+    <ol>
+      <li>Compute the memory-importance scores $M_i$ of all short-term adapters.</li>
+      <li>Update the global conflict graph and apply projection compensation (§3.8) for adapters entering the window.</li>
+      <li>Select merge candidates (conflict-graph priority plus FIFO, supporting non-adjacent "jumping" selection).</li>
+      <li>Run dual-dimension conflict detection to obtain the conflict score $CS$ (§3.6).</li>
+      <li>Apply the appropriate resolution strategy according to $CS$ (§3.7): Strategy A (direct weighted fusion), Strategy B (projection orthogonalization), or Strategy C (TCG isolation, which also increments the window count by two).</li>
+      <li>If a fusion occurred, perform SVD low-rank reconstruction (§3.3).</li>
+      <li>Decide the fate of the merged adapter: if the merged importance $\alpha_{\mathrm{merged}} \geq \theta$ (default $\theta=0.3$) it stays in the short-term window, where important knowledge keeps its full weight and remains available for later merges; otherwise it sediments into the long-term layer with a discounted write coefficient $\beta$ (default $\beta=0.8$), keeping the window bounded without discarding the knowledge outright.</li>
+      <li>After conflicts are resolved, automatically dismantle bound TCG gates, admit the new adapter, and update the conflict graph.</li>
+    </ol>
+
+    <h3>3.5 Elastic Protection of Long-Term Memory</h3>
+    <p>In early versions the long-term layer was completely frozen, so erroneous knowledge could never be corrected and biases accumulated. TH-LoRA updates the long-term layer with a learning rate three orders of magnitude smaller than the short-term one ($lr_{\mathrm{long}}=10^{-7}$ vs. $lr_{\mathrm{short}}=10^{-4}$) and an EWC regularizer:</p>
+    <div class="eq">$$\mathcal{L}_{\mathrm{total}} = \mathcal{L}_{\mathrm{task}} + \frac{\lambda_{\mathrm{ewc}}}{2}\sum_{j} F_j \left(\theta_j - \theta_j^*\right)^2 \tag{5}$$</div>
+    <p>where $F_j$ is the diagonal element of the Fisher information matrix measuring the importance of parameter $j$ to previous tasks and $\theta_j^*$ is the optimal parameter value after the previous task; the factor $\tfrac{1}{2}$ stems from the Taylor expansion of the quadratic approximation. High-$F_j$ parameters barely move (stability), low-$F_j$ parameters can adjust slowly (correctability), and the update magnitude is constrained by both $lr_{\mathrm{long}}$ and $\lambda_{\mathrm{ewc}}$ (default $500$).</p>
+
+    <h3>3.6 Dual-Dimension Conflict Detection</h3>
+    <h4>Parameter conflict (O-LoRA subspace interference).</h4>
+    <p>Following O-LoRA [6], which treats LoRA subspaces as approximations of task-gradient subspaces and enforces $A_i^\top A_j = 0$, we generalize the orthogonality idea from training-time constraints to consolidation-time detection. Rather than elementwise sign statistics, we measure the signed subspace interference between two adapters,</p>
+    <div class="eq">$$I_{ij} = \frac{\left\langle \Delta W_i,\, \Delta W_j \right\rangle_F}{\left\lVert \Delta W_i \right\rVert_F \cdot \left\lVert \Delta W_j \right\rVert_F + \epsilon} \in [-1, 1] \tag{6}$$</div>
+    <p>where $\langle\cdot,\cdot\rangle_F$ is the Frobenius inner product and $\epsilon$ prevents division by zero. Per-module values $I_{ij}^{(l)}$ are averaged to obtain $\bar{I}_{ij}$. Intuitively, $I_{ij}=+1$ means cooperative (merging yields pure gain), $0$ means orthogonal (the O-LoRA ideal of zero interference), and $-1$ means opposite (direct weighted merging cancels out). Because it operates on the subspace level, the measure is insensitive to magnitude differences caused by training dynamics (steps, learning rate), and it is <em>homologous</em> to O-LoRA's orthogonality condition.</p>
+    <p>The signed interference is mapped to a <em>parameter conflict</em> $\rho_p\in[0,1]$ for conflict grading,</p>
+    <div class="eq">$$\rho_p = \frac{1 - \bar{I}_{ij}}{2} \tag{7}$$</div>
+    <p>Orthogonality maps to $\rho_p=0.5$ (not $0$): in O-LoRA training orthogonality means zero interference, but TH-LoRA <em>merges</em> two adapters into one low-rank space, where orthogonal directions still require SVD truncation to be preserved simultaneously. The linear map $\frac{1-I}{2}$ (instead of $\max(0,-I)$) gives Strategy B a smooth gradient in the moderate interval.</p>
+    <h4>Behavior conflict.</h4>
+    <p>Parameter conflict does not imply knowledge conflict: two adapters with opposite subspace directions may still agree on actual inputs. We therefore add a behavior-level metric computed offline on a validation set $\mathcal{D}$ (used only for evaluation, never for back-propagation):</p>
+    <div class="eq">$$\rho_b = \alpha \cdot \frac{\mathbb{E}_{x\sim\mathcal{D}}\left[ D_{KL}\left(P_a(\cdot|x) \,\middle\|\, P_b(\cdot|x)\right)\right]}{\log |\mathcal{V}|} + (1-\alpha)\cdot \left|\mathrm{Acc}_a - \mathrm{Acc}_b\right| \tag{8}$$</div>
+    <p>where $\alpha=0.5$ balances the two terms, $\mathcal{V}$ is the vocabulary, and the KL term is normalized by $\log|\mathcal{V}|$ so that $\rho_b \in [0,1]$.</p>
+    <h4>Combined conflict score.</h4>
+    <p>The final conflict score combines both dimensions:</p>
+    <div class="eq">$$CS = w_p\, \rho_p + w_b\, \rho_b, \qquad w_p + w_b = 1 \tag{9}$$</div>
+    <p>with default $w_p = w_b = 0.5$. Table 2 summarizes the three conflict levels and the corresponding resolution strategy.</p>
+
+    <table>
+      <caption>Table 2: Conflict grading and resolution strategies (thresholds are empirical defaults to be calibrated per model/data).</caption>
+      <thead><tr><th>$CS$ range</th><th>Level</th><th>Resolution</th></tr></thead>
+      <tbody>
+        <tr><td>$CS &lt; 0.2$</td><td>Mild</td><td>Strategy A: direct weighted fusion + SVD</td></tr>
+        <tr><td>$0.2 \le CS &lt; 0.6$</td><td>Moderate</td><td>Strategy B: projection orthogonalization + SVD</td></tr>
+        <tr><td>$CS \ge 0.6$</td><td>Severe</td><td>Strategy C: TCG transient gating (no merge)</td></tr>
+      </tbody>
+    </table>
+
+    <h3>3.7 Three-Level Conflict Resolution</h3>
+    <h4>Strategy A: direct fusion (mild conflict).</h4>
+    <p>When $CS&lt;0.2$, the adapters are merged directly, $\Delta W = \alpha_a \Delta W_a + \alpha_b \Delta W_b$, followed by SVD reconstruction.</p>
+    <h4>Strategy B: O-LoRA-inspired projection orthogonalization (moderate conflict).</h4>
+    <p>When $0.2\le CS&lt;0.6$, rather than forcing a full merge, TH-LoRA orthogonalizes only the <em>opposing</em> component of the lower-priority adapter against the higher-priority one. Each task receives an arbitration score</p>
+    <div class="eq">$$S_i = w_s^M\, M_i + w_s^F\, F_i + w_s^C\, C_i, \qquad (w_s^M, w_s^F, w_s^C) = (0.4, 0.3, 0.3) \tag{10}$$</div>
+    <p>where $F_i$ and $C_i$ are re-weighted to further favor high-frequency, high-credibility tasks under conflict. Let the protected side be $\Delta W_{\mathrm{keep}}$ and the orthogonalized side be $\Delta W_{\mathrm{orth}}$. Per target module,</p>
+    <div class="eq">$$\mathrm{proj\_coeff} = \frac{\left\langle \Delta W_{\mathrm{orth}},\, \Delta W_{\mathrm{keep}} \right\rangle_F}{\left\lVert \Delta W_{\mathrm{keep}}\right\rVert_F^2}, \qquad \Delta W_{\mathrm{orth}}^{\mathrm{comp}} = \Delta W_{\mathrm{orth}} - \min\!\left(0,\, \mathrm{proj\_coeff}\right) \Delta W_{\mathrm{keep}} \tag{11}$$</div>
+    <p>followed by $\Delta W = \alpha_{\mathrm{keep}}\Delta W_{\mathrm{keep}} + \alpha_{\mathrm{orth}}\Delta W_{\mathrm{orth}}^{\mathrm{comp}}$ and SVD reconstruction. Key properties: when $\mathrm{proj\_coeff}&lt;0$ (opposing directions), after compensation $\langle\Delta W_{\mathrm{orth}}^{\mathrm{comp}},\Delta W_{\mathrm{keep}}\rangle_F = 0$, so the two no longer cancel; when $\mathrm{proj\_coeff}\ge 0$ (cooperative/orthogonal), the orthogonalized adapter is unchanged and no cooperative gain is lost. This is the consolidation-time analogue of the short-term-vs-long-term projection compensation (§3.8), applied here between two short-term adapters.</p>
+    <h4>Strategy C: transient conflict gate (severe conflict).</h4>
+    <p>When $CS\ge 0.6$, TH-LoRA refuses to merge and instead binds a <em>transient conflict gate</em>:</p>
+    <div class="eq">$$g(x) = \sigma\!\left(W_g \cdot [h_x,\, e_{\mathrm{conflict}}] + b_g\right), \qquad y = g(x)\cdot y_{\mathrm{old}} + (1-g(x))\cdot y_{\mathrm{new}} \tag{12}$$</div>
+    <p>where $g$ is a two-layer MLP (<code>Linear(in+32) → SiLU → Linear(1) → Sigmoid</code>) and $e_{\mathrm{conflict}}$ encodes conflict meta-information. Both conflicting adapters remain in the window (the window count is incremented by two), and on overflow non-gated old adapters are sedimented first, keeping the isolation effective. TCG is context-aware, routes on demand, imposes zero overhead during normal inference (the vast majority of queries), and supports arbitrarily-shaped inputs by flattening 3D (batch, seq, dim) tensors. Once the conflict is resolved (sedimentation or forced merge), the gates are dismantled automatically.</p>
+
+    <h3>3.8 Global Conflict Graph</h3>
+    <p>TH-LoRA maintains a global conflict graph $G=(V,E)$ whose vertices are active adapters and whose edge $(i,j)$ exists iff $CS_{ij}&gt;\tau$ (default $\tau=0.2$) with edge weight $CS_{ij}$. The graph (i) <em>reveals non-adjacent conflicts</em> by scanning all existing vertices when a new adapter arrives, (ii) <em>prioritizes high-conflict modules</em> so that overflow consolidation merges the highest-degree vertices first, and (iii) <em>optimizes merge order</em> to avoid compressing a strongly conflicting pair after merging a weakly conflicting one. Its lifecycle is synchronized with the window: adding an adapter adds a vertex and edges and applies projection compensation against the long-term memory if needed; consolidating or sedimenting removes vertices and updates neighbor edges; resolving a conflict removes edges and dismantles bound TCG gates.</p>
+    <p>For non-adjacent conflicts, TH-LoRA supports four paths (Table 3): jumping selective merging within the window; projection compensation for short-term vs. long-term conflicts, $\Delta W_{\mathrm{new}}^{\mathrm{comp}} = \Delta W_{\mathrm{new}} - \mathrm{proj}_{\Delta W_{\mathrm{long}}}(\Delta W_{\mathrm{new}})$; TCG with conflict-context encoding for severe cross-layer conflicts; and a periodic consistency check with lightweight retraining (5 steps at $lr_{\mathrm{long}}$ under EWC) for delayed internal conflicts of the long-term layer.</p>
+
+    <table>
+      <caption>Table 3: Non-adjacent conflict handling paths.</caption>
+      <thead><tr><th>Scenario</th><th>Handling</th></tr></thead>
+      <tbody>
+        <tr><td>Non-adjacent within window</td><td>Jumping selective merge (global graph selection)</td></tr>
+        <tr><td>Short-term vs. long-term</td><td>Projection compensation onto orthogonal complement</td></tr>
+        <tr><td>Severe cross-layer</td><td>TCG + conflict-context encoding</td></tr>
+        <tr><td>Internal long-term (delayed)</td><td>Periodic consistency check + lightweight retraining</td></tr>
+      </tbody>
+    </table>
+
+    <h3>3.9 Trigger Decision Layer</h3>
+    <p>To close the loop from inference back to learning, TH-LoRA provides a trigger decision layer with three families of triggers and a lightweight priority queue, implemented purely with <code>threading</code> and <code>queue.PriorityQueue</code> (zero external dependencies such as Celery or Redis):</p>
+    <ul>
+      <li><em>Threshold triggers</em>: window overflow, active conflict ($CS\ge 0.6$), PPL anomaly (inference PPL exceeding the historical mean by a factor of $2.0$), and low usage frequency ($F_i&lt;0.05$).</li>
+      <li><em>Event triggers</em>: new task arrival, user correction feedback, and API inference calls (the latter only updates usage statistics).</li>
+      <li><em>Scheduled triggers</em>: periodic consolidation (every $3600$s), EWC Fisher refresh (every $86400$s), and full consistency check (every $604800$s).</li>
+    </ul>
+    <p>Tasks are submitted to a <code>PriorityQueue</code> ordered by $(-\text{priority}, \text{created\_at})$; a daemon worker thread polls the triggers and consumes the queue. Synchronous mode (<code>worker_enabled=False</code>) is supported for offline experiments, and asynchronous mode (<code>worker_enabled=True</code>) supports online continual learning. In particular, <code>record_inference(task_id, ppl)</code> feeds inference-time PPL and usage statistics back so that the PPL-anomaly and low-frequency triggers can automatically schedule consolidation or eviction.</p>
+
+    <h2 id="exp">4. Experiments</h2>
+
+    <h3>4.1 Setup</h3>
+    <p>We validate TH-LoRA on two base models: <strong>MiniMind</strong> [13] (768 hidden dim, 8 layers), used as a fast development vehicle, and <strong>Qwen2.5-1.5B</strong> [14] with its instruct tokenizer, trained on a medical question-answering corpus ($\approx$ 25K entries, 10 epochs) for the case study below. The key hyperparameters are summarized in Table 4.</p>
+
+    <table>
+      <caption>Table 4: Core hyperparameters (defaults).</caption>
+      <thead><tr><th>Symbol</th><th>Meaning</th><th>Default</th></tr></thead>
+      <tbody>
+        <tr><td>$W_{\mathrm{win}}$</td><td>short-term window size</td><td>$4$</td></tr>
+        <tr><td>$r$</td><td>LoRA rank</td><td>$16$</td></tr>
+        <tr><td>$(w_t, w_f, w_c, w_r)$</td><td>importance weights</td><td>$(0.3, 0.25, 0.25, 0.2)$</td></tr>
+        <tr><td>$\lambda$</td><td>recency decay rate</td><td>$0.01$</td></tr>
+        <tr><td>$K$</td><td>usage-frequency window</td><td>$100$</td></tr>
+        <tr><td>$\theta$</td><td>sedimentation threshold</td><td>$0.3$</td></tr>
+        <tr><td>$lr_{\mathrm{short}}$</td><td>short-term learning rate</td><td>$10^{-4}$</td></tr>
+        <tr><td>$lr_{\mathrm{long}}$</td><td>long-term learning rate</td><td>$10^{-7}$</td></tr>
+        <tr><td>$\lambda_{\mathrm{ewc}}$</td><td>EWC coefficient</td><td>$500$</td></tr>
+        <tr><td>$\tau$</td><td>conflict-graph edge threshold</td><td>$0.2$</td></tr>
+        <tr><td>$(CS_{\mathrm{low}}, CS_{\mathrm{high}})$</td><td>conflict thresholds</td><td>$(0.2, 0.6)$</td></tr>
+        <tr><td>$(w_p, w_b)$</td><td>conflict-dimension weights</td><td>$(0.5, 0.5)$</td></tr>
+        <tr><td>$\beta$</td><td>sedimentation write coefficient</td><td>$0.8$</td></tr>
+        <tr><td>$(w_s^M, w_s^F, w_s^C)$</td><td>Strategy-B arbitration weights</td><td>$(0.4, 0.3, 0.3)$</td></tr>
+      </tbody>
+    </table>
+
+    <h3>4.2 Baselines and Metrics</h3>
+    <p>We compare against: full fine-tuning (upper-bound reference), sequential LoRA without memory management (baseline), adapters (traditional PEFT) [12], RAG [11] (external vs. parametric memory), continual LoRA [6], and static mixture-of-LoRA routing (e.g., LoRAMoE [10]) to contrast TCG's transient routing against permanent routing. Metrics include <em>Accuracy</em> on the new task, <em>Retention Rate</em> (old-task accuracy / initial accuracy), <em>Forgetting Score</em> ($1-\text{Retention Rate}$), <em>Memory Cost</em> (active LoRA parameters / base-model parameters), <em>Merge Info Loss</em> (discarded SVD energy), and <em>TCG Activation Rate</em> (severe-conflict triggers / total merges).</p>
+
+    <h3>4.3 Results on MiniMind</h3>
+    <p>A four-task continual-learning run is fully validated on MiniMind: the consolidation pipeline, EWC-protected long-term updates, and TCG gating all execute as specified, parameter growth remains bounded (the short-term window size is constant and long-term sedimentation keeps a single adapter), and the Retention Rate / Forgetting Score evaluation report confirms reduced forgetting compared with sequential LoRA. We treat these as a correctness and stability validation of the mechanism; a full quantitative benchmark across larger models is ongoing (§5).</p>
+
+    <h3>4.4 Case Study: Qwen2.5-1.5B Medical LoRA</h3>
+    <p>Using an 18-item hard-knowledge evaluation set, we compare the base model (<code>--no_tg</code>) against the TH-LoRA medical adapter and obtain two key observations about <em>what LoRA actually learns</em>.</p>
+    <p><strong>Observation 1: isolated factual knowledge is hard to sediment.</strong> For the question "maximum daily intake of MSG", the training data's gold answer gives the WHO/FAO JECFA ADI (0–120 mg/kg, $\approx 7.2$g for a 60kg adult), yet both the LoRA and the base model reply only "moderation is fine". This fact appears exactly once among $\approx$25K entries. Low-rank updates struggle to memorize low-frequency, isolated numeric knowledge; increasing epochs has limited effect, whereas raising the entry's frequency (repeating it 2–3 times or up-weighting sampling) helps.</p>
+    <p><strong>Observation 2: high-frequency domain associations cause attribution crosstalk (hallucination).</strong> For "mechanism of amlodipine besylate tablets", the LoRA hallucinates an AT1/aldosterone (ARB/ACEI-type) mechanism instead of the correct calcium-channel-blocker (CCB) answer. All 23 amlodipine entries in the training data are correctly labeled as CCB with no contamination, but the corpus is dominated by high-frequency "antihypertensive mechanism" descriptions (ARB/ACEI blocking angiotensin II). The LoRA thus enhances the whole "antihypertensive medication" domain prior and crosstalks the frequent pattern onto the low-frequency specific attribution, drifting into hallucination during long-response completion.</p>
+    <blockquote>These observations imply that <strong>LoRA learns distributions, not facts</strong>.</blockquote>
+    <p>They also motivate an important evaluation caveat: a single metric is unreliable — the amlodipine question yields a very low PPL ($59.46$) with fully wrong content, while a blood-glucose question yields PPL $48.78$ with fully correct content. Low PPL $\neq$ correctness; judgment must be content-based, with PPL only auxiliary. In addition, evaluation questions must be separated into a common-sense baseline group (to verify the LoRA does not hurt) and a fine-grained knowledge group (numerical values, units, drug mechanisms, procedure full names, to verify the LoRA's added value), because the instruct base model already answers consultative questions correctly, masking LoRA improvements through a ceiling effect.</p>
+
+    <h3>4.5 Addressing Lookup-Type Knowledge</h3>
+    <p>To address the two failure modes above, we compared four candidate solutions: (0) classify knowledge by "number/concept" into a separate dataset + LoRA with higher weight; (A) classify by "lookup-type/pattern-type" with a high rank for lookup; (B) data frequency augmentation (repeat isolated entries 2–3 times or increase sampling weight); and (C) route lookup-type knowledge to RAG while letting LoRA focus on patterns and skills. Our tested evidence shows that path 0 — automatically extracting metric Q&amp;A pairs into training during loading (85 continuation blocks + 120 metric Q&amp;A, 59% metric share) — <em>failed</em>: all 5 key indicators (grain 1.45 trillion jin, energy 5.8 billion tons of standard coal, R&amp;D investment $&gt;7\%$, etc.) were answered incorrectly, with failure modes of off-topic drift, digit crosstalk, temporal misalignment, and template-filling recitation. This confirms that the bottleneck is LoRA's lookup capability rather than the supervision form or frequency. We therefore implemented a combined A+B recipe: metric knowledge as an independent task with rank 64 (path A), importance boost 3, and repetition 3 (path B), exploiting per-task rank (<code>TaskLoRA.rank</code>) and boost-before-softmax importance amplification. The recommended roadmap is to first try path B (cheapest) to distinguish "frequency bottleneck" from "lookup-capability bottleneck", then path A, and finally path C (RAG) as the long-term architecture direction, which also provides the entry point for the RAG-vs-parametric-memory comparison.</p>
+
+    <h2 id="discussion">5. Discussion and Limitations</h2>
+    <p><strong>Limitations.</strong> (i) <em>Empirical thresholds</em>: the conflict thresholds ($CS_{\mathrm{low}}=0.2$, $CS_{\mathrm{high}}=0.6$) and the conflict-dimension weights ($w_p=w_b=0.5$) are empirical defaults that should be calibrated per model and data distribution. (ii) <em>Lookup capability</em>: empirical evidence indicates LoRA-based parametric memory is ill-suited to isolated, lookup-type facts; frequency augmentation helps only partially, and the general solution likely requires retrieval-assisted designs. (iii) <em>Theory</em>: formal guarantees (e.g., an upper bound on SVD reconstruction information loss and EWC convergence) are planned future work. (iv) <em>Scale</em>: full quantitative evaluation on larger models (Qwen2.5-1.5B, planned Llama-3.2-3B) and long-horizon enterprise data streams is ongoing.</p>
+    <p><strong>Future work.</strong> We plan to (i) complete the quantitative benchmark with the baselines of §4, including the RAG-vs-parametric-memory and TCG-vs-static-routing ablations; (ii) derive theoretical guarantees for low-rank reconstruction and EWC-protected updates; (iii) integrate frequency-aware data curation for lookup-type knowledge; and (iv) validate on real, long-running enterprise knowledge-update streams.</p>
+
+    <h2 id="conclusion">6. Conclusion</h2>
+    <p>We presented TH-LoRA, a temporal hierarchical adaptive LoRA memory for lifelong learning of LLMs. By organizing adapters into a short-term window and an EWC-protected long-term layer, weighting consolidation by a composite memory-importance score, merging through constant-rank SVD reconstruction, detecting conflicts in both parameter and behavior spaces, and isolating severe conflicts with transient gates coordinated by a global conflict graph and a trigger decision layer, TH-LoRA achieves bounded parameter growth, reduced forgetting, and controllable consolidation. Initial experiments on MiniMind and Qwen2.5-1.5B validate the mechanism and expose that LoRA memorizes distributions rather than isolated facts, informing both the method's current design and its retrieval-assisted future.</p>
+
+    <h2 id="refs">References</h2>
+    <ol class="refs">
+      <li>M. McCloskey and N. J. Cohen. Catastrophic interference in connectionist networks: The sequential learning problem. <em>Psychology of Learning and Motivation</em>, 24:109–165, 1989.</li>
+      <li>R. M. French. Catastrophic forgetting in connectionist networks. <em>Trends in Cognitive Sciences</em>, 3(4):128–135, 1999.</li>
+      <li>E. J. Hu, Y. Shen, P. Wallis, Z. Allen-Zhu, Y. Li, S. Wang, L. Wang, and W. Chen. LoRA: Low-rank adaptation of large language models. <em>ICLR 2022</em>, arXiv:2106.09685, 2022.</li>
+      <li>J. Kirkpatrick, R. Pascanu, N. Rabinowitz, et al. Overcoming catastrophic forgetting in neural networks. <em>PNAS</em>, 114(13):3521–3526, 2017.</li>
+      <li>H. Shi, Z. Xu, H. Wang, et al. Continual learning of large language models: A comprehensive survey. <em>ACM Computing Surveys</em>, 58(5):1–42, arXiv:2402.01301, 2025.</li>
+      <li>X. Wang, T. Chen, Q. Ge, et al. Orthogonal subspace learning for language model continual learning. <em>Findings of ACL: EMNLP 2023</em>, arXiv:2310.14152, 2023.</li>
+      <li>G. Ilharco, M. Ribeiro, M. Wortsman, et al. Editing models with task arithmetic. <em>ICLR 2023</em>, arXiv:2212.04089, 2023.</li>
+      <li>C. Huang, Q. Liu, B. Y. Lin, et al. LoraHub: Efficient cross-task generalization via dynamic LoRA composition. <em>COLM 2024</em>, arXiv:2307.13269, 2024.</li>
+      <li>D. Gao, Y. Ma, S. Liu, et al. FashionGPT: LLM instruction fine-tuning with multiple LoRA-adapter fusion. <em>Knowledge-Based Systems</em>, 299:112043, 2024.</li>
+      <li>S. Dou, E. Zhou, Y. Liu, et al. LoRAMoE: Alleviating world knowledge forgetting in large language models via MoE-style plugin. <em>ACL 2024</em>, arXiv:2312.09979, 2024.</li>
+      <li>P. Lewis, E. Perez, A. Piktus, et al. Retrieval-augmented generation for knowledge-intensive NLP tasks. <em>NeurIPS 2020</em>, arXiv:2005.11401, 2020.</li>
+      <li>N. Houlsby, A. Giurgiu, S. Jastrzebski, et al. Parameter-efficient transfer learning for NLP. <em>ICML 2019</em>, arXiv:1902.00751, 2019.</li>
+      <li>J. Gong. MiniMind: A minimal from-scratch LLM training project. <a href="https://github.com/jingyaogong/minimind" target="_blank" rel="noopener">github.com/jingyaogong/minimind</a>, 2024.</li>
+      <li>A. Yang, B. Yang, B. Zhang, et al. Qwen2.5 technical report. arXiv:2412.15115, 2024.</li>
+    </ol>
+
+    <p class="refs"><em>Acknowledgments.</em> The author acknowledges the use of AI language models (e.g., ChatGPT, GLM, DeepSeek, Qwen) for assistance in literature review, manuscript preparation, and proofreading.</p>
+  </main>
+
+  <footer>
+    <div class="container">
+      © 2026 Old Craftsman · Powered by GitHub Pages
+    </div>
+  </footer>
+
+</body>
+</html>
