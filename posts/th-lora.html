@@ -337,6 +337,7 @@
 
     <h2 id="conclusion">6. Conclusion</h2>
     <p>We presented TH-LoRA, a temporal hierarchical adaptive LoRA memory for lifelong learning of LLMs. By organizing adapters into a short-term window and an EWC-protected long-term layer, weighting consolidation by a composite memory-importance score, merging through constant-rank SVD reconstruction, detecting conflicts in both parameter and behavior spaces, and isolating severe conflicts with transient gates coordinated by a global conflict graph and a trigger decision layer, TH-LoRA achieves bounded parameter growth, reduced forgetting, and controllable consolidation. Initial experiments on MiniMind and Qwen2.5-1.5B validate the mechanism and expose that LoRA memorizes distributions rather than isolated facts, informing both the method's current design and its retrieval-assisted future.</p>
+    <p><strong>Source code.</strong> The complete implementation of TH-LoRA — covering training, inference, and a web demo — is open-sourced at <a href="https://github.com/kenera/th_lora" target="_blank" rel="noopener">github.com/kenera/th_lora</a>.</p>
 
     <h2 id="refs">References</h2>
     <ol class="refs">
